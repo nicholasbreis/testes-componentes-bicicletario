@@ -1,0 +1,55 @@
+import pytest
+
+from src.bike_repository import BikeRepository
+from src.rider_repository import RiderRepository
+from src.rental_repository import RentalRepository
+from src.hold_repository import HoldRepository
+from src.bike_share_service import BikeShareService
+
+@pytest.fixture
+def service():
+    return BikeShareService(
+        bike_repository=BikeRepository(),
+        rider_repository=RiderRepository(),
+        rental_repository=RentalRepository(),
+        hold_repository=HoldRepository(),
+    )
+
+# Cenário 1 - Empréstimo com sucesso
+
+def test_borrow_bike_success(service):
+    result = service.borrow_bike(rider_id=10, bike_id=1)
+
+    assert result is True
+
+
+# Cenário 2 — Empréstimo de bicicleta inexistente
+
+def test_borrow_nonexistent_bike(service):
+    result = service.borrow_bike(rider_id=10, bike_id=999)
+
+    assert result is False
+
+
+# Cenário 3 — Empréstimo por usuário inexistente
+
+def test_borrow_bike_nonexistent_rider(service):
+    result = service.borrow_bike(rider_id=999, bike_id=1)
+
+    assert result is False
+
+
+# Cenário 4 — Empréstimo bloqueado por conta inativa
+
+def test_borrow_bike_inactive_account(service):
+    result = service.borrow_bike(rider_id=30, bike_id=1)
+
+    assert result is False
+
+
+# Cenário 5 — Empréstimo bloqueado por usuário bloqueado
+
+def test_borrow_bike_blocked_rider(service):
+    result = service.borrow_bike(rider_id=20, bike_id=1)
+
+    assert result is False
