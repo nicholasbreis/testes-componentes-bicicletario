@@ -53,3 +53,59 @@ def test_borrow_bike_blocked_rider(service):
     result = service.borrow_bike(rider_id=20, bike_id=1)
 
     assert result is False
+
+
+# Cenário 6 — Empréstimo bloqueado por limite de 2 empréstimos ativos
+
+def test_borrow_bike_exceeds_active_rental_limit(service):
+    
+    service.borrow_bike(rider_id=40, bike_id=1)
+    service.borrow_bike(rider_id=40, bike_id=2)
+
+    result = service.borrow_bike(rider_id=10, bike_id=3)
+    
+    service2 = BikeShareService(
+        bike_repository=BikeRepository(),
+        rider_repository=RiderRepository(),
+        rental_repository=RentalRepository(),
+        hold_repository=HoldRepository(),
+    )
+    service2.borrow_bike(rider_id=40, bike_id=1)
+    service2.borrow_bike(rider_id=40, bike_id=2)
+
+    bike_repo = BikeRepository()
+    bike_repo._bikes[5] = {"model": "Bike Extra", "available": True}
+
+    rider_repo = RiderRepository()
+    rental_repo = RentalRepository()
+    hold_repo = HoldRepository()
+
+    svc = BikeShareService(bike_repo, rider_repo, rental_repo, hold_repo)
+    svc.borrow_bike(rider_id=40, bike_id=1)
+    svc.borrow_bike(rider_id=40, bike_id=2)
+
+    result = svc.borrow_bike(rider_id=40, bike_id=5)
+    assert result is False
+
+
+# Cenário 7 — Reserva com sucesso para bicicleta indisponível
+
+def test_hold_bike_success(service):
+    
+    service.borrow_bike(rider_id=10, bike_id=1)
+
+    result = service.hold_bike(rider_id=40, bike_id=1)
+
+    assert result is True
+
+
+# Cenário 8 — Tentativa de reserva duplicada
+
+
+def test_hold_bike_duplicate(service):
+    
+    service.hold_bike(rider_id=40, bike_id=3)
+
+    result = service.hold_bike(rider_id=40, bike_id=3)
+
+    assert result is False
