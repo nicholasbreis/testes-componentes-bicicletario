@@ -109,3 +109,68 @@ def test_hold_bike_duplicate(service):
     result = service.hold_bike(rider_id=40, bike_id=3)
 
     assert result is False
+
+
+# Cenário 9 — Devolução simples sem reserva pendente
+
+def test_return_bike_no_pending_hold(service):
+   
+    service.borrow_bike(rider_id=10, bike_id=1)
+
+    result = service.return_bike(rider_id=10, bike_id=1)
+
+    assert result is True
+    assert service.bike_repository.is_available(bike_id=1) is True
+
+
+# Cenário 10 — Devolução com reserva pendente mantém bike indisponível
+
+def test_return_bike_with_pending_hold_keeps_bike_unavailable(service):
+   
+    service.borrow_bike(rider_id=10, bike_id=1)
+    service.hold_bike(rider_id=40, bike_id=1)
+
+    result = service.return_bike(rider_id=10, bike_id=1)
+
+    assert result is True
+    assert service.bike_repository.is_available(bike_id=1) is False
+
+
+# Cenário 11 — Empréstimo pelo próprio usuário que tinha reserva remove a reserva
+
+def test_borrow_bike_removes_own_hold(service):
+   
+    service.rental_repository.create_rental(rider_id=10, bike_id=3)
+
+    service.hold_bike(rider_id=40, bike_id=3)
+
+    service.return_bike(rider_id=10, bike_id=3)
+    assert service.bike_repository.is_available(bike_id=3) is False
+
+    service.bike_repository.mark_available(bike_id=3)
+
+    result = service.borrow_bike(rider_id=40, bike_id=3)
+
+    assert result is True
+    assert service.hold_repository.has_hold(rider_id=40, bike_id=3) is False
+
+
+# Cenário 12 — Sequência completa: empréstimo → reserva → devolução → novo empréstimo
+
+def test_full_flow_borrow_hold_return_borrow(service):
+
+    assert service.borrow_bike(rider_id=10, bike_id=1) is True
+
+    assert service.borrow_bike(rider_id=40, bike_id=1) is False
+
+    assert service.hold_bike(rider_id=40, bike_id=1) is True
+
+    assert service.return_bike(rider_id=10, bike_id=1) is True
+    assert service.bike_repository.is_available(bike_id=1) is False
+
+    service.bike_repository.mark_available(bike_id=1)
+
+    assert service.borrow_bike(rider_id=40, bike_id=1) is True
+    assert service.hold_repository.has_hold(rider_id=40, bike_id=1) is False
+
+    assert service.borrow_bike(rider_id=10, bike_id=1) is False
