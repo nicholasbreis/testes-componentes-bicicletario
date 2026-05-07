@@ -58,24 +58,8 @@ def test_borrow_bike_blocked_rider(service):
 # Cenário 6 — Empréstimo bloqueado por limite de 2 empréstimos ativos
 
 def test_borrow_bike_exceeds_active_rental_limit(service):
-    
-    service.borrow_bike(rider_id=40, bike_id=1)
-    service.borrow_bike(rider_id=40, bike_id=2)
-
-    result = service.borrow_bike(rider_id=10, bike_id=3)
-    
-    service2 = BikeShareService(
-        bike_repository=BikeRepository(),
-        rider_repository=RiderRepository(),
-        rental_repository=RentalRepository(),
-        hold_repository=HoldRepository(),
-    )
-    service2.borrow_bike(rider_id=40, bike_id=1)
-    service2.borrow_bike(rider_id=40, bike_id=2)
-
     bike_repo = BikeRepository()
     bike_repo._bikes[5] = {"model": "Bike Extra", "available": True}
-
     rider_repo = RiderRepository()
     rental_repo = RentalRepository()
     hold_repo = HoldRepository()
